@@ -1,4 +1,4 @@
-## TMLE analysis file ##
+## analysis file ##
 
 library(tidyverse)
 library(data.table)
@@ -90,11 +90,11 @@ dat <- left_join(p, h, by = c("Household_ID"="Household_ID")) %>%
     ),
     mothers_occupation = unclass(factor(mothers_occupation)),
     food_since_birth = unclass(factor(food_since_birth)),
-    shed_poliovirus_at_52_weeks = as.factor(ifelse(shed_poliovirus_at_52_weeks == "Yes", 1, 0)),
-    shed_poliovirus_at_52_weeks_by_qrtpcr = as.factor(ifelse(shed_poliovirus_at_52_weeks_by_qrtpcr == "Yes", 1, 0)),
-    shed_poliovirus_serotype_1_at_52_weeks_by_qrtpcr = as.factor(ifelse(shed_poliovirus_serotype_1_at_52_weeks_by_qrtpcr == "Yes", 1, 0)),
-    shed_poliovirus_serotype_2_at_52_weeks_by_qrtpcr = as.factor(ifelse(shed_poliovirus_serotype_2_at_52_weeks_by_qrtpcr == "Yes", 1, 0)),
-    shed_poliovirus_serotype_3_at_52_weeks_by_qrtpcr = as.factor(ifelse(shed_poliovirus_serotype_2_at_52_weeks_by_qrtpcr == "Yes", 1, 0)),
+    shed_poliovirus_at_52_weeks = ifelse(shed_poliovirus_at_52_weeks == "Yes", 1, 0),
+    shed_poliovirus_at_52_weeks_by_qrtpcr = ifelse(shed_poliovirus_at_52_weeks_by_qrtpcr == "Yes", 1, 0),
+    shed_poliovirus_serotype_1_at_52_weeks_by_qrtpcr = ifelse(shed_poliovirus_serotype_1_at_52_weeks_by_qrtpcr == "Yes", 1, 0),
+    shed_poliovirus_serotype_2_at_52_weeks_by_qrtpcr = ifelse(shed_poliovirus_serotype_2_at_52_weeks_by_qrtpcr == "Yes", 1, 0),
+    shed_poliovirus_serotype_3_at_52_weeks_by_qrtpcr = ifelse(shed_poliovirus_serotype_2_at_52_weeks_by_qrtpcr == "Yes", 1, 0),
     floor_material = unclass(factor(floor_material)),
     wall_material = unclass(factor(wall_material)),
     roof_material = unclass(factor(roof_material)),
@@ -112,8 +112,6 @@ dat <- left_join(p, h, by = c("Household_ID"="Household_ID")) %>%
     before_feeding_self = unclass(factor(before_feeding_self)),
     food_availabilty = unclass(factor(food_availabilty))
   )
-
-
 
 # missing covariates: 
 colSums(is.na(dat))
@@ -136,12 +134,13 @@ dat1 <- dat %>%
 
 
 # ---------------------------------------------------------------------------#
-## ANALYSIS ##
+### ANALYSIS ###
+
 library(ggplot2)
 
 # primary outcome: any type shed at 52 wks by qRT-PCR
 ggplot(dat1) +
-  aes(x = assignment_group, fill = shed_poliovirus_at_52_weeks_by_qrtpcr) +
+  aes(x = assignment_group, fill = factor(shed_poliovirus_at_52_weeks_by_qrtpcr)) +
   geom_bar()
 
 # primary outcome: chi-squared
@@ -149,7 +148,6 @@ chisq <- chisq.test(table(dat1$assignment_group, dat1$shed_poliovirus_at_52_week
 chisq
 # fail to reject null
 # is there a way to do contrasts for each level of assignment group??
-
 
 
 ## UNADJUSTED ANALYSIS
@@ -171,47 +169,131 @@ data <- data %>%
   )
 
 
-# # unadjusted Mantel-Haenszel test -- but no stratication variable, did not run
-# Y <- data$shed_poliovirus_at_52_weeks_by_qrtpcr
-# A <- data$assignment_group
-# h1_contrasts <- list(c("D", "A"), 
-#                      c("D", "B"),
-#                      c("D", "C"))
+# # unadjusted binomial linear model - risk difference
+# unadj.glm2 <- glm2(shed_poliovirus_at_52_weeks_by_qrtpcr ~ factor(assignment_group), data = data, family = binomial(link = "identity"))
+# tidy(unadj.glm2, conf.int = TRUE)
 # 
-# rr.h1 <- t(sapply(h1_contrasts,washb_mh,Y=Y,tr=A,measure="RR"))
-# mh.rr <- washb_mh(Y=Y,tr=A, contrast=c("A","D"),strat = data$participantid, measure="RR")
-# round(mh.rr,4)
+# # unadjusted log-binomial model - risk ratio
+# unadj.logbin <- glm2(shed_poliovirus_at_52_weeks_by_qrtpcr ~ factor(assignment_group), data = data, family = binomial(link = "log"))
+# tidy(unadj.logbin, exponentiate = TRUE, conf.int = TRUE) 
 
-# # unadjusted RD (additive risk model)
-# unadj.blm <- blm(shed_poliovirus_at_52_weeks_by_qrtpcr ~ binary_assignment, data= data)
-# round(confint(unadj.blm), 3) # not converging
+# unadjusted washbGLM log binomial- risk ratio
+unadj.washb.logbin1 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                 pair=NULL, id=data$participantid, contrast=c("A","D"), 
+                                 family=binomial(link='log'), print = FALSE)
+unadj.washb.logbin2 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                 pair=NULL, id=data$participantid, contrast=c("B","D"), 
+                                 family=binomial(link='log'), print = FALSE)
+unadj.washb.logbin3 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                 pair=NULL, id=data$participantid, contrast=c("C","D"), 
+                                 family=binomial(link='log'), print = FALSE)
+unadj.washb.logbin4 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                 pair=NULL, id=data$participantid, contrast=c("A","B"), 
+                                 family=binomial(link='log'), print = FALSE)
+unadj.washb.logbin5 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                 pair=NULL, id=data$participantid, contrast=c("A","C"), 
+                                 family=binomial(link='log'), print = FALSE)
+unadj.washb.logbin6 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                 pair=NULL, id=data$participantid, contrast=c("B","C"), 
+                                 family=binomial(link='log'), print = FALSE)
 
-# unadjusted binomial linear model - risk difference
-unadj.glm2 <- glm2(shed_poliovirus_at_52_weeks_by_qrtpcr ~ factor(assignment_group), data = data, family = binomial(link = "identity"))
-tidy(unadj.glm2, conf.int = TRUE)
+unadj.rr <- rbind(round(unadj.washb.logbin1$TR,4), round(unadj.washb.logbin2$TR,4), round(unadj.washb.logbin3$TR,4), 
+                  round(unadj.washb.logbin4$TR,4),round(unadj.washb.logbin5$TR,4), round(unadj.washb.logbin6$TR,4))
+rownames(unadj.rr) <- c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(unadj.rr)
 
-# unadjusted log-binomial model - risk ratio
-unadj.logbin <- glm2(shed_poliovirus_at_52_weeks_by_qrtpcr ~ factor(assignment_group), data = data, family = binomial(link = "log"))
-tidy(unadj.logbin, exponentiate = TRUE, conf.int = TRUE) 
+# unadjusted washbGLM linear probability model- risk difference
+unadj.washb.linprob1 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                  pair=NULL, id=data$participantid, contrast=c("A","D"), 
+                                  family="gaussian", print = FALSE)
+unadj.washb.linprob2 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                  pair=NULL, id=data$participantid, contrast=c("B","D"), 
+                                  family="gaussian", print = FALSE)
+unadj.washb.linprob3 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                  pair=NULL, id=data$participantid, contrast=c("C","D"), 
+                                  family="gaussian", print = FALSE)
+unadj.washb.linprob4 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                  pair=NULL, id=data$participantid, contrast=c("A","B"), 
+                                  family="gaussian", print = FALSE)
+unadj.washb.linprob5 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                  pair=NULL, id=data$participantid, contrast=c("A","C"), 
+                                  family="gaussian", print = FALSE)
+unadj.washb.linprob6 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                  pair=NULL, id=data$participantid, contrast=c("B","C"), 
+                                  family="gaussian", print = FALSE)
 
-# unadjusted tmle
-set.seed(777)
-SL.library <- c("SL.mean","SL.glm","SL.gam","SL.glmnet")
-unadj.tmle <- tmle(Y = data$shed_poliovirus_at_52_weeks_by_qrtpcr, A = data$binary_assignment, 
-                   family = "binomial", Q.SL.library = SL.library) # error: have to specify Ws
+unadj.rd <- rbind(round(unadj.washb.linprob1$TR,4), round(unadj.washb.linprob2$TR,4), round(unadj.washb.linprob3$TR,4),
+                  round(unadj.washb.linprob4$TR,4), round(unadj.washb.linprob5$TR,4), round(unadj.washb.linprob6$TR,4))
+rownames(unadj.rd) <-c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(unadj.rd)
 
-# data(washb_bangladesh_enrol)
-# washb_bangladesh_enrol
+# unadjusted washbTMLE
+unadj.washbtmle1 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,
+                               pair=NULL,
+                               id=data$participantid, 
+                               W=NULL, 
+                               contrast=c("A","D"), 
+                               family="binomial",
+                               print=FALSE,
+                               seed=12345)
+unadj.washbtmle2 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,
+                               pair=NULL,
+                               id=data$participantid, 
+                               W=NULL, 
+                               contrast=c("B","D"), 
+                               family="binomial",
+                               print=FALSE,
+                               seed=12345)
+unadj.washbtmle3 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,
+                               pair=NULL,
+                               id=data$participantid, 
+                               W=NULL, 
+                               contrast=c("C","D"), 
+                               family="binomial",
+                               print=FALSE,
+                               seed=12345)
+unadj.washbtmle4 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,
+                               pair=NULL,
+                               id=data$participantid, 
+                               W=NULL, 
+                               contrast=c("A","B"), 
+                               family="binomial",
+                               print=FALSE,
+                               seed=12345)
+unadj.washbtmle5 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,
+                               pair=NULL,
+                               id=data$participantid, 
+                               W=NULL, 
+                               contrast=c("A","C"), 
+                               family="binomial",
+                               print=FALSE,
+                               seed=12345)
+unadj.washbtmle6 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,
+                               pair=NULL,
+                               id=data$participantid, 
+                               W=NULL, 
+                               contrast=c("B","C"), 
+                               family="binomial",
+                               print=FALSE,
+                               seed=12345)
 
-unadj.washbtmle <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks,tr=data$binary_assignment, id = data$participantid,
-                         W=NULL,contrast = c(0, 1), family = "binomial",print= TRUE, seed = 12345)
-debugonce(washb_tmle) # getting a summary.factor error??
 
-
-
-
-
-
+unadj.tmle.rr <- rbind(round(unlist(unadj.washbtmle1$estimates$RR),4),round(unlist(unadj.washbtmle2$estimates$RR),4),
+                       round(unlist(unadj.washbtmle3$estimates$RR),4),round(unlist(unadj.washbtmle4$estimates$RR),4),
+                       round(unlist(unadj.washbtmle5$estimates$RR),4),round(unlist(unadj.washbtmle6$estimates$RR),4))
+rownames(unadj.tmle.rr) <-c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(unadj.tmle.rr)
+unadj.tmle.rd <- rbind(round(unlist(unadj.washbtmle1$estimates$ATE),4),round(unlist(unadj.washbtmle2$estimates$ATE),4),
+                       round(unlist(unadj.washbtmle3$estimates$ATE),4),round(unlist(unadj.washbtmle4$estimates$ATE),4),
+                       round(unlist(unadj.washbtmle5$estimates$ATE),4),round(unlist(unadj.washbtmle6$estimates$ATE),4))
+rownames(unadj.tmle.rd) <-c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(unadj.tmle.rd)
 
 
 ## ADJUSTED ANALYSES
@@ -227,14 +309,216 @@ Wadj <- c("sex","mode_of_birth","bacille_calmetteguerin_bcg_at_birth","maternal_
           "persons_living_in_house_count","motherheight_impute","motherweight_impute")
 setDF(data)
 # washb_prescreen
-# # fails to converge
-# prescreened_varnames<-washb_prescreen(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,Ws = data[Wadj],family=binomial(link='log'), pval=0.2)
-prescreened_varnames<-washb_prescreen(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,Ws = data[Wadj],family="binomial", pval=0.2)
+prescreened_varnames<-washb_prescreen(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,Ws = data[Wadj],family=poisson(link='log'), pval=0.2)
 prescreened_varnames
 prescreened_vars <- subset(data[Wadj], select = prescreened_varnames)
 
-# # poisson gets negative value error message
-# prescreened_varnames2<-washb_prescreen(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,Ws = data[Wadj],family=poisson(link="log"), pval=0.2)
+
+# adjusted washbGLM -risk ratio 
+# log binomial model fails to converge --> used poisson 
+adj.washb.logbin1 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,pair=NULL, W=data[Wadj], 
+                               id=data$participantid, contrast=c("A","D"), 
+                               family=poisson(link='log'),
+                               print = FALSE)
+adj.washb.logbin2 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,pair=NULL, W=data[Wadj], 
+                               id=data$participantid, contrast=c("B","D"), 
+                               family=poisson(link='log'),
+                               print = FALSE)
+adj.washb.logbin3 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,pair=NULL, W=data[Wadj], 
+                               id=data$participantid, contrast=c("C","D"), 
+                               family=poisson(link='log'),
+                               print = FALSE)
+adj.washb.logbin4 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,pair=NULL, W=data[Wadj], 
+                               id=data$participantid, contrast=c("A","B"), 
+                               family=poisson(link='log'),
+                               print = FALSE)
+adj.washb.logbin5 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,pair=NULL, W=data[Wadj], 
+                               id=data$participantid, contrast=c("A","C"), 
+                               family=poisson(link='log'),
+                               print = FALSE)
+adj.washb.logbin6 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                               tr=data$assignment_group,pair=NULL, W=data[Wadj], 
+                               id=data$participantid, contrast=c("B","C"), 
+                               family=poisson(link='log'),
+                               print = FALSE)
+
+adj.rr <- rbind(round(adj.washb.logbin1$TR,4), round(adj.washb.logbin2$TR,4), round(adj.washb.logbin3$TR,4), 
+                round(adj.washb.logbin4$TR,4),round(adj.washb.logbin5$TR,4), round(adj.washb.logbin6$TR,4))
+rownames(adj.rr) <- c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(adj.rr)
+
+# adjusted washbGLM linear probability model- risk difference 
+adj.washb.linprob1 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                pair=NULL, W=data[Wadj],id=data$participantid, contrast=c("A","D"), 
+                                family="gaussian", print = FALSE)
+adj.washb.linprob2 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                pair=NULL, W=data[Wadj],id=data$participantid, contrast=c("B","D"), 
+                                family="gaussian", print = FALSE)
+adj.washb.linprob3 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                pair=NULL, W=data[Wadj],id=data$participantid, contrast=c("C","D"), 
+                                family="gaussian", print = FALSE)
+adj.washb.linprob4 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                pair=NULL, W=data[Wadj],id=data$participantid, contrast=c("A","B"), 
+                                family="gaussian", print = FALSE)
+adj.washb.linprob5 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                pair=NULL, W=data[Wadj],id=data$participantid, contrast=c("A","C"), 
+                                family="gaussian", print = FALSE)
+adj.washb.linprob6 <- washb_glm(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,tr=data$assignment_group,
+                                pair=NULL, W=data[Wadj],id=data$participantid, contrast=c("B","C"), 
+                                family="gaussian", print = FALSE)
+
+adj.rd <- rbind(round(adj.washb.linprob1$TR,4), round(adj.washb.linprob2$TR,4), round(adj.washb.linprob3$TR,4),
+                round(adj.washb.linprob4$TR,4), round(adj.washb.linprob5$TR,4), round(adj.washb.linprob6$TR,4))
+rownames(adj.rd) <-c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(adj.rd)
 
 
+# adjusted washbTMLE
+adj.washbtmle1 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                             tr=data$assignment_group,
+                             pair=NULL,
+                             id=data$participantid, 
+                             W=data[Wadj], 
+                             contrast=c("A","D"), 
+                             family="binomial",
+                             Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                             print=FALSE,
+                             seed=12345)
+adj.washbtmle2 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                             tr=data$assignment_group,
+                             pair=NULL,
+                             id=data$participantid, 
+                             W=data[Wadj], 
+                             contrast=c("B","D"), 
+                             family="binomial",
+                             Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                             print=FALSE,
+                             seed=12345)
+adj.washbtmle3 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                             tr=data$assignment_group,
+                             pair=NULL,
+                             id=data$participantid, 
+                             W=data[Wadj], 
+                             contrast=c("C","D"), 
+                             family="binomial",
+                             Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                             print=FALSE,
+                             seed=12345)
+adj.washbtmle4 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                             tr=data$assignment_group,
+                             pair=NULL,
+                             id=data$participantid, 
+                             W=data[Wadj], 
+                             contrast=c("A","B"), 
+                             family="binomial",
+                             Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                             print=FALSE,
+                             seed=12345)
+adj.washbtmle5 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                             tr=data$assignment_group,
+                             pair=NULL,
+                             id=data$participantid, 
+                             W=data[Wadj], 
+                             contrast=c("A","C"), 
+                             family="binomial",
+                             Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                             print=FALSE,
+                             seed=12345)
+adj.washbtmle6 <- washb_tmle(Y=data$shed_poliovirus_at_52_weeks_by_qrtpcr,
+                             tr=data$assignment_group,
+                             pair=NULL,
+                             id=data$participantid, 
+                             W=data[Wadj], 
+                             contrast=c("B","C"), 
+                             family="binomial",
+                             Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                             print=FALSE,
+                             seed=12345)
 
+
+adj.tmle.rr <- rbind(round(unlist(adj.washbtmle1$estimates$RR),4),round(unlist(adj.washbtmle2$estimates$RR),4),
+                     round(unlist(adj.washbtmle3$estimates$RR),4),round(unlist(adj.washbtmle4$estimates$RR),4),
+                     round(unlist(adj.washbtmle5$estimates$RR),4),round(unlist(adj.washbtmle6$estimates$RR),4))
+rownames(adj.tmle.rr) <-c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(adj.tmle.rr)
+
+adj.tmle.rd <- rbind(round(unlist(adj.washbtmle1$estimates$ATE),4),round(unlist(adj.washbtmle2$estimates$ATE),4),
+                     round(unlist(adj.washbtmle3$estimates$ATE),4),round(unlist(adj.washbtmle4$estimates$ATE),4),
+                     round(unlist(adj.washbtmle5$estimates$ATE),4),round(unlist(adj.washbtmle6$estimates$ATE),4))
+rownames(adj.tmle.rd) <-c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(adj.tmle.rd)
+
+# adjusted washbTMLE + IPCW
+# full data
+fulldata <- data
+fulldata$Delta <- ifelse(is.na(fulldata$shed_poliovirus_at_52_weeks_by_qrtpcr),0,1)
+fulldata$Ydelta <- fulldata$shed_poliovirus_at_52_weeks_by_qrtpcr
+fulldata$Ydelta[fulldata$Delta==0] <- 9
+
+# IPCW-TMLE param
+washb.ipcw1 <- washb_tmle(Delta=fulldata$Delta, tr=fulldata$assignment_group, 
+                          id=fulldata$participantid, pair=NULL,
+                          Y=fulldata$Ydelta, family="gaussian",
+                          Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                          contrast=c("A","D"), 
+                          W=fulldata[Wadj],
+                          print = FALSE,
+                          seed=12345)
+washb.ipcw2 <- washb_tmle(Delta=fulldata$Delta, tr=fulldata$assignment_group, 
+                          id=fulldata$participantid, pair=NULL,
+                          Y=fulldata$Ydelta, family="gaussian",
+                          Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                          contrast=c("B","D"), 
+                          W=fulldata[Wadj], 
+                          print = FALSE,
+                          seed=12345)
+washb.ipcw3 <- washb_tmle(Delta=fulldata$Delta, tr=fulldata$assignment_group, 
+                          id=fulldata$participantid, pair=NULL,
+                          Y=fulldata$Ydelta, family="gaussian",
+                          Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                          contrast=c("C","D"), 
+                          W=fulldata[Wadj], 
+                          print = FALSE,
+                          seed=12345)
+washb.ipcw4 <- washb_tmle(Delta=fulldata$Delta, tr=fulldata$assignment_group, 
+                          id=fulldata$participantid, pair=NULL,
+                          Y=fulldata$Ydelta, family="gaussian",
+                          Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                          contrast=c("A","B"), 
+                          W=fulldata[Wadj],
+                          print = FALSE,
+                          seed=12345)
+washb.ipcw5 <- washb_tmle(Delta=fulldata$Delta, tr=fulldata$assignment_group, 
+                          id=fulldata$participantid, pair=NULL,
+                          Y=fulldata$Ydelta, family="gaussian",
+                          Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                          contrast=c("A","C"), 
+                          W=fulldata[Wadj], 
+                          print = FALSE,
+                          seed=12345)
+washb.ipcw6 <- washb_tmle(Delta=fulldata$Delta, tr=fulldata$assignment_group, 
+                          id=fulldata$participantid, pair=NULL,
+                          Y=fulldata$Ydelta, family="gaussian",
+                          Q.SL.library=c("SL.mean","SL.glm","SL.bayesglm","SL.gam","SL.glmnet"),
+                          contrast=c("B","C"), 
+                          W=fulldata[Wadj], 
+                          print = FALSE,
+                          seed=12345)
+
+# adj.ipcw.rr <- rbind(round(unlist(washb.ipcw1$estimates$RR),4),round(unlist(washb.ipcw2$estimates$RR),4),
+#                      round(unlist(washb.ipcw3$estimates$RR),4),round(unlist(washb.ipcw4$estimates$RR),4),
+#                      round(unlist(washb.ipcw5$estimates$RR),4),round(unlist(washb.ipcw6$estimates$RR),4))
+# rownames(adj.ipcw.rr) <-c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+# print(adj.ipcw.rr)
+## is there anyway to get risk ratio from IPCW?? only risk difference???
+
+adj.ipcw.rd <- rbind(round(unlist(washb.ipcw1$estimates$ATE),4),round(unlist(washb.ipcw2$estimates$ATE),4),
+                     round(unlist(washb.ipcw3$estimates$ATE),4),round(unlist(washb.ipcw4$estimates$ATE),4),
+                     round(unlist(washb.ipcw5$estimates$ATE),4),round(unlist(washb.ipcw6$estimates$ATE),4))
+rownames(adj.ipcw.rd) <-c("A v D","B v D","C v D","A v B", "A v C", "B v C")
+print(adj.ipcw.rd)
