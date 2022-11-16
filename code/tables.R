@@ -1,9 +1,9 @@
-## results tables ##
+# results tables
 library(data.table)
 library(dplyr)
 library(tidyr)
 
-# run analysis2 code first!
+# run analysis3 code first!
 
 # input: name of aggregated results from each analysis method in analysis3 code
 # output: a row for combined table for each analysis method
@@ -62,7 +62,8 @@ rr.table <- rr.table %>%
 
 
 ## table ##
+library(knitr)
 library(kableExtra)
 
-kable(rd.table) %>%  kable_styling(latex_options = "striped", font_size = 9) %>% row_spec(c(3:5), background = "aliceblue")
-kable(rr.table) %>%  kable_styling(latex_options = "striped", font_size = 9) %>% row_spec(c(3,4), background = "aliceblue")
+kable(rd.table, caption = "Risk differences across group contrasts") %>%  kable_styling(latex_options = "striped", font_size = 9) %>% row_spec(c(3:5), background = "aliceblue")
+kable(rr.table, caption = "Risk ratios across group contrasts") %>%  kable_styling(latex_options = "striped", font_size = 9) %>% row_spec(c(3,4), background = "aliceblue")

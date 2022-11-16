@@ -20,7 +20,7 @@ joined <- left_join(p, h, by = c("Household_ID"="Household_ID"))
 
 #table 1 datasets - all participants
 dat <- left_join(joined, r, by = c("Participant_ID"="Participant_ID", 
-                                          "Household_ID"="Household_ID")) %>% 
+                                   "Household_ID"="Household_ID")) %>% 
   rename(
     poliovaccrand = `Poliovirus vaccine randomization [EUPATH_0036429]`,
     rotavaccrand = `Rotarix vaccine randomization [EUPATH_0036422]`,
@@ -43,7 +43,7 @@ dat <- left_join(joined, r, by = c("Participant_ID"="Participant_ID",
     familyinc = `Family income in local currency [EUPATH_0000727]`,
     WAZ = `Weight-for-age z-score [EUPATH_0000733]`,
     HAZ = `Height-for-age z-score [EUPATH_0011894]`
-    ) %>% 
+  ) %>% 
   mutate_all(na_if, "") %>% 
   mutate(group = case_when(
     poliovaccrand == "OPV at 39 weeks" & rotavaccrand == "Receive Rotarix" ~ "A",
@@ -55,7 +55,7 @@ dat <- left_join(joined, r, by = c("Participant_ID"="Participant_ID",
 
 table.data <- dat
 
-  
+
 # withdrawn participants
 withdrawal.tabledat <- table.data %>% 
   filter(!is.na(withdrawalreason))
@@ -106,6 +106,13 @@ table1(~ age + sex + birthmode + WAZ + HAZ + foodbirth + mage + mage1preg + live
        overall = "Total", data = table.data)
 
 # stratified by withdrawn group
-table1(~ group + age + sex + birthmode + WAZ + HAZ + foodbirth + mage + mage1preg + livebirths +
-         mheight + mweight + meduc + moccup + familyinc + watersource + wastefacil + householdcount | withdrawn,
-       overall = "Total", data = table.data)
+table1_w <- table1(~ group + age + sex + birthmode + WAZ + HAZ + foodbirth + mage + mage1preg + livebirths +
+                     mheight + mweight + meduc + moccup + familyinc + watersource + wastefacil + householdcount | withdrawn,
+                   overall = "Total", data = table.data)
+
+table1_w
+# 
+# library(flextable)
+# library(magrittr)
+# t1flex(table1_w) %>% 
+#   save_as_docx(path="table1_w.docx")
