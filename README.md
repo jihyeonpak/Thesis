@@ -6,7 +6,7 @@ Jessica Pak
 
 Advisors: Dr. Jack Colford, MD, PhD, MPH and Dr. Andrew Mertens PhD, MS, MA
 
-All data used in project resides in "data" folder, code for exploratory data analysis, model building, and creating tables and figures in "codebook.Rmd" file within the "code" folder.
+All data used in project resides in "data" folder, code for exploratory data analysis, model building, and creating tables and figures in "codebook.Rmd" file within the "code" folder. Final version of paper draft: final_draft_v3_JP.docx
 
 #### Abstract: 
 Background:
