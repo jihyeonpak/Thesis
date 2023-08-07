@@ -32,7 +32,9 @@ library(gridExtra)
 
 ## Introduction
 
-This analysis codebook is intended to provide all code used to explore, analyze, and visualize the data from the PROVIDE study. The results and interpretation are presented in the written manuscript for the capstone project, "Interference of Oral Rotavirus Vaccine on Oral Poliovirus Vaccine with or without an Inactive Poliovirus Vaccine Replacement Dose Among Bangladeshi Infants: a Randomized Controlled Trial". 
+This analysis codebook is intended to provide all code used to explore, analyze, and visualize the data from the PROVIDE study for a secondary analysis on vaccine interference and oral poliovirus vaccine effectiveness. The results and interpretation are presented in the written manuscript for the thesis project, "Interference of Oral Rotavirus Vaccine on Oral Poliovirus Vaccine with or without an Inactive Poliovirus Vaccine Replacement Dose Among Bangladeshi Infants: a Secondary Analysis of a Randomized Controlled Trial". All data can be accessed via [ClinEpiDB](https://clinepidb.org/ce/app) upon study team review and approval.*
+
+*William A. Petri, Rashidul Haque, Beth D. Kirkpatrick, et al. Dataset: PROVIDE Randomized Controlled Trial. ClinEpiDB. 03 March 2022, Release 21 (https://clinepidb.org/ce/app/workspace/analyses/DS_fe95d702c3/new)
 
 ## EDA and Table 1
 
