@@ -6,7 +6,7 @@ Ji Hyeon (Jessica) Pak
 
 Advisors: Dr. Jack Colford, MD, PhD, MPH and Dr. Andrew Mertens PhD, MS, MA
 
-All data used in project resides in "data" folder, code for exploratory data analysis, model building, and creating tables and figures in "codebook.Rmd" file within the "code" folder. Final version of paper draft: final_draft_v4_JP.docx
+Data accessed via ClinEpiDB (William A. Petri, Rashidul Haque, Beth D. Kirkpatrick, et al. Dataset: PROVIDE Randomized Controlled Trial. ClinEpiDB. 03 March 2022, Release 21 (https://clinepidb.org/ce/app/workspace/analyses/DS_fe95d702c3/new). Code for exploratory data analysis, model building, and creating tables and figures in "codebook.Rmd" file within the "code" folder. Exploratory shiny app to run descriptive and statistic analysis resides in "shinyapp" folder. Final version of paper draft: final_draft_v4_JP.docx
 
 #### Abstract: 
 Background:
