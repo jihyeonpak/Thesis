@@ -2,7 +2,7 @@
 
 Interference of Oral Rotavirus Vaccine on Oral Poliovirus Vaccine with or without an Inactive Poliovirus Vaccine Replacement Dose Among Bangladeshi Infants: a Secondary Analysis of a Randomized Controlled Trial
 
-Ji Hyeon (Jessica) Pak
+Ji Hyeon (Jessica) Pak, MPH
 
 Advisors: Dr. Jack Colford, MD, PhD, MPH and Dr. Andrew Mertens PhD, MS, MA
 
